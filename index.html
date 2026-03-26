@@ -2,176 +2,93 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Certification Tracker</title>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Segoe UI', sans-serif;
-}
-
 body {
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
-  color: #fff;
+  font-family: Arial;
+  background: #1e3c72;
+  color: white;
   padding: 20px;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 900px;
   margin: auto;
-}
-
-h1 {
-  text-align: center;
-  margin-bottom: 20px;
 }
 
 .card {
   background: rgba(255,255,255,0.1);
   padding: 15px;
-  border-radius: 12px;
   margin-bottom: 20px;
-  backdrop-filter: blur(10px);
+  border-radius: 10px;
 }
 
 input, textarea, select {
   width: 100%;
   padding: 8px;
-  margin-top: 5px;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  border: none;
+  margin: 5px 0;
 }
 
 button {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
+  padding: 8px;
+  margin-top: 5px;
   cursor: pointer;
-  background: #00c6ff;
-  color: #000;
-  font-weight: bold;
-}
-
-button:hover {
-  opacity: 0.85;
 }
 
 .task {
   padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 10px;
+  margin: 10px 0;
+  border-radius: 6px;
 }
 
-.task.completed {
-  background: #2ecc71;
-}
-
-.task.incomplete {
-  background: #e74c3c;
-}
-
-.progress-bar {
-  height: 10px;
-  background: #ccc;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #00ffcc;
-  width: 0%;
-}
-
-.flex {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.countdown {
-  font-size: 18px;
-  margin-top: 10px;
-}
-
-a {
-  color: #fff;
-  text-decoration: underline;
-}
-
+.completed { background: green; }
+.incomplete { background: red; }
 </style>
+
 </head>
 
 <body>
 
 <div class="container">
-  <h1>Certification Tracker</h1>
 
-  <!-- Add Task -->
-  <div class="card">
-    <h2>Add Task</h2>
-    <input id="taskName" placeholder="Task Name">
-    <textarea id="taskDesc" placeholder="Description"></textarea>
-    <input id="fileName" placeholder="File Name">
-    <input id="fileLink" placeholder="File Link">
-    <select id="source">
-      <option>Coursera</option>
-      <option>SQLBI</option>
-      <option>AWS</option>
-      <option>Other</option>
-    </select>
-    <button onclick="addTask()">Add Task</button>
-  </div>
+<h1>Certification Tracker</h1>
 
-  <!-- Progress -->
-  <div class="card">
-    <h2>Progress</h2>
-    <p>Total Tasks: <span id="total"></span></p>
-    <p>Completed: <span id="completed"></span></p>
-    <p>Completion %: <span id="percent"></span></p>
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill"></div>
-    </div>
-  </div>
+<div class="card">
+<h2>Add Task</h2>
+<input id="taskName" placeholder="Task Name">
+<textarea id="taskDesc" placeholder="Description"></textarea>
+<input id="fileName" placeholder="File Name">
+<input id="fileLink" placeholder="File Link">
 
-  <!-- Countdown -->
-  <div class="card">
-    <h2>Countdown</h2>
-    <div class="countdown" id="pl300"></div>
-    <div class="countdown" id="aws"></div>
-  </div>
+<select id="source">
+<option>Coursera</option>
+<option>AWS</option>
+<option>Other</option>
+</select>
 
-  <!-- Tasks -->
-  <div class="card">
-    <h2>Tasks</h2>
-    <div id="taskList"></div>
-  </div>
+<button onclick="addTask()">Add Task</button>
+<button onclick="downloadTasks()">Download Tasks (.txt)</button>
+</div>
 
-  <!-- Reflection -->
-  <div class="card">
-    <h2>Daily Reflection</h2>
-    <textarea id="studied" placeholder="What I studied today"></textarea>
-    <textarea id="planned" placeholder="Planned tasks"></textarea>
-    <button onclick="generatePrompt()">Generate Mentor Evaluation Prompt</button>
-    <textarea id="output"></textarea>
-    <button onclick="downloadLog()">Download Daily Log (.txt)</button>
-  </div>
+<div class="card">
+<h2>Tasks</h2>
+<div id="taskList"></div>
+</div>
 
 </div>
 
 <script>
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let logs = JSON.parse(localStorage.getItem("logs")) || [];
 
+// Load from localStorage
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+// Save function
 function save() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
-  localStorage.setItem("logs", JSON.stringify(logs));
 }
 
+// Add task
 function addTask() {
   const task = {
     id: Date.now(),
@@ -182,40 +99,35 @@ function addTask() {
     source: source.value,
     completed: false
   };
+
   tasks.push(task);
   save();
   render();
 }
 
+// Toggle complete
 function toggleTask(id) {
   tasks = tasks.map(t => {
-    if (t.id === id) {
-      t.completed = !t.completed;
-      if (t.completed) {
-        logs.push({ ...t, time: new Date().toLocaleString() });
-      }
-    }
+    if (t.id === id) t.completed = !t.completed;
     return t;
   });
   save();
   render();
 }
 
+// Delete task
 function deleteTask(id) {
   tasks = tasks.filter(t => t.id !== id);
   save();
   render();
 }
 
+// Render tasks
 function render() {
   const list = document.getElementById("taskList");
   list.innerHTML = "";
 
-  let completed = 0;
-
   tasks.forEach(t => {
-    if (t.completed) completed++;
-
     const div = document.createElement("div");
     div.className = "task " + (t.completed ? "completed" : "incomplete");
 
@@ -231,62 +143,23 @@ function render() {
 
     list.appendChild(div);
   });
-
-  document.getElementById("total").innerText = tasks.length;
-  document.getElementById("completed").innerText = completed;
-
-  let percent = tasks.length ? ((completed / tasks.length) * 100).toFixed(1) : 0;
-  document.getElementById("percent").innerText = percent + "%";
-  document.getElementById("progressFill").style.width = percent + "%";
 }
 
-function countdown() {
-  const today = new Date();
+// Download as .txt file
+function downloadTasks() {
+  let text = JSON.stringify(tasks, null, 2);
 
-  const pl300 = new Date("2026-05-25");
-  const aws = new Date("2026-06-18");
-
-  const plDays = Math.ceil((pl300 - today) / (1000 * 60 * 60 * 24));
-  const awsDays = Math.ceil((aws - today) / (1000 * 60 * 60 * 24));
-
-  document.getElementById("pl300").innerText = "PL-300: " + plDays + " days left";
-  document.getElementById("aws").innerText = "AWS: " + awsDays + " days left";
-}
-
-function generatePrompt() {
-  const studied = document.getElementById("studied").value;
-  const planned = document.getElementById("planned").value;
-
-  const prompt = `
-Act as a strict certification mentor.
-
-What I studied today:
-${studied}
-
-Tasks I planned:
-${planned}
-
-Evaluate me strictly:
-1. Completion quality
-2. Gaps
-3. Improvement plan
-4. Tomorrow’s priority tasks
-`;
-
-  document.getElementById("output").value = prompt;
-}
-
-function downloadLog() {
-  let text = logs.map(l => `${l.time} - ${l.name}`).join("\n");
   const blob = new Blob([text], { type: "text/plain" });
+
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "daily_log.txt";
+  a.download = "tasks.txt";
   a.click();
 }
 
+// Initial render
 render();
-countdown();
+
 </script>
 
 </body>
